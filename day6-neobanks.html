@@ -1,0 +1,593 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Day 6 — Neobanks: Spending Crypto Without Selling It</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Barlow:wght@400;500;600&family=DM+Mono:wght@400;500&display=swap');
+
+  :root{
+    --bg-deep:#070f1b; --bg:#0c1a2c; --bg-panel:#0f2038; --bg-card:#122544;
+    --line: rgba(234,228,211,0.10); --line-strong: rgba(234,228,211,0.22);
+    --gold:#c9a13b; --gold-bright:#eec957; --rust:#c06a4f; --green:#4f9d6e;
+    --ink:#ece6d6; --ink-dim:#8fa0b8; --ink-faint:#5c6c84;
+  }
+  *{ box-sizing:border-box; margin:0; padding:0; }
+  html{ scroll-behavior:smooth; }
+  body{
+    background: radial-gradient(1200px 600px at 15% -10%, rgba(201,161,59,0.08), transparent 60%), var(--bg-deep);
+    color:var(--ink); font-family:'Barlow', sans-serif; line-height:1.64; -webkit-font-smoothing:antialiased;
+  }
+  .eyebrow{ font-family:'DM Mono', monospace; font-size:0.72rem; letter-spacing:0.22em; text-transform:uppercase; color:var(--gold); }
+  h1,h2,h3,h4{ font-family:'Bebas Neue', sans-serif; font-weight:400; letter-spacing:0.02em; color:var(--ink); }
+  .wrap{ max-width:860px; margin:0 auto; padding:0 28px; }
+
+  .hero{ padding:80px 0 44px; border-bottom:1px solid var(--line); }
+  .hero .eyebrow{ display:block; margin-bottom:20px; }
+  .hero h1{ font-size:clamp(2.4rem, 6vw, 4rem); line-height:1.02; max-width:740px; }
+  .hero h1 span{ color:var(--gold-bright); }
+  .hero p{ margin-top:22px; max-width:640px; font-size:1.08rem; color:var(--ink-dim); }
+  .meta-row{ display:flex; gap:22px; margin-top:26px; flex-wrap:wrap; }
+  .meta-item{ font-family:'DM Mono', monospace; font-size:0.74rem; color:var(--ink-faint); text-transform:uppercase; letter-spacing:0.06em; }
+  .meta-item b{ color:var(--gold); }
+
+  .agenda{ padding:32px 0 44px; border-bottom:1px solid var(--line); }
+  .agenda h2{ font-size:1.3rem; margin-bottom:16px; color:var(--ink-dim); text-transform:uppercase; letter-spacing:0.04em; font-family:'DM Mono', monospace; font-weight:500;}
+  .agenda-grid{ display:grid; grid-template-columns:1fr 1fr; gap:8px 28px; }
+  @media (max-width: 640px){ .agenda-grid{ grid-template-columns:1fr; } }
+  .agenda-item{ display:flex; gap:10px; font-size:0.88rem; color:var(--ink-dim); padding:6px 0; }
+  .agenda-item b{ color:var(--gold); font-family:'DM Mono', monospace; font-size:0.8rem; min-width:20px; }
+
+  section.block{ padding:56px 0; border-bottom:1px solid var(--line); }
+  section.block .eyebrow{ margin-bottom:12px; }
+  section.block h2{ font-size:clamp(1.6rem, 4vw, 2.2rem); margin-bottom:18px; }
+  section.block h4{ font-size:1.15rem; color:var(--gold-bright); margin:22px 0 8px; font-family:'Barlow', sans-serif; font-weight:600; letter-spacing:0; text-transform:none; }
+  section.block p{ max-width:680px; color:var(--ink-dim); font-size:0.98rem; }
+  section.block p + p{ margin-top:12px; }
+  section.block ul.plain{ margin-top:10px; padding-left:0; list-style:none; display:grid; gap:8px; max-width:680px; }
+  section.block ul.plain li{ font-size:0.94rem; color:var(--ink-dim); padding-left:18px; position:relative; }
+  section.block ul.plain li::before{ content:'—'; position:absolute; left:0; color:var(--gold); }
+
+  .criteria-table{ margin-top:18px; border:1px solid var(--line-strong); border-radius:10px; overflow:hidden; }
+  .criteria-row{ display:grid; grid-template-columns:210px 1fr; border-top:1px solid var(--line); }
+  .criteria-row:first-child{ border-top:none; }
+  .criteria-row .k{ font-family:'DM Mono', monospace; font-size:0.76rem; color:var(--gold); padding:14px 16px; background:var(--bg-card); display:flex; align-items:center; }
+  .criteria-row .v{ padding:14px 16px; font-size:0.9rem; color:var(--ink-dim); }
+  @media (max-width: 640px){ .criteria-row{ grid-template-columns:1fr; } .criteria-row .k{ border-bottom:1px solid var(--line); } }
+
+  .callout{ background:var(--bg-card); border-left:3px solid var(--gold); border-radius:6px; padding:16px 20px; margin-top:20px; max-width:680px; }
+  .callout p{ color:var(--ink); font-size:0.92rem; margin:0; max-width:none; }
+  .callout .tag{ font-family:'DM Mono', monospace; font-size:0.66rem; letter-spacing:0.12em; text-transform:uppercase; color:var(--gold); margin-bottom:6px; display:block; }
+  .callout.warn{ border-left-color:var(--rust); }
+  .callout.warn .tag{ color:var(--rust); }
+  .callout.go{ border-left-color:var(--green); }
+  .callout.go .tag{ color:var(--green); }
+
+  .avail-table{ margin-top:18px; border:1px solid var(--line-strong); border-radius:10px; overflow:hidden; width:100%; border-collapse:collapse; font-size:0.86rem; }
+  .avail-table th{ font-family:'DM Mono', monospace; font-size:0.68rem; text-transform:uppercase; letter-spacing:0.05em; color:var(--ink-faint); text-align:left; padding:10px 12px; background:var(--bg-card); border-bottom:1px solid var(--line-strong); }
+  .avail-table td{ padding:12px; border-top:1px solid var(--line); color:var(--ink-dim); vertical-align:top; }
+  .avail-table td.name{ color:var(--ink); font-weight:600; }
+  .avail-table .status{ font-family:'DM Mono', monospace; font-size:0.76rem; padding:3px 8px; border-radius:5px; display:inline-block; white-space:nowrap; }
+  .status.yes{ background:rgba(79,157,110,0.15); color:var(--green); }
+  .status.partial{ background:rgba(201,161,59,0.15); color:var(--gold-bright); }
+  .status.unclear{ background:rgba(192,106,79,0.15); color:var(--rust); }
+  .avail-table-scroll{ overflow-x:auto; }
+
+  .steps-mini{ display:grid; gap:10px; margin-top:16px; }
+  .step-mini{ display:grid; grid-template-columns:28px 1fr; gap:12px; }
+  .step-mini .dot{ width:8px; height:8px; border-radius:50%; background:var(--gold); margin-top:6px; flex-shrink:0; }
+  .step-mini p{ font-size:0.92rem; color:var(--ink-dim); margin:0; max-width:none; }
+
+  .discussion{ margin-top:18px; display:grid; gap:10px; max-width:680px; }
+  .discussion li{ font-size:0.92rem; color:var(--ink-dim); padding-left:18px; position:relative; list-style:none; }
+  .discussion li::before{ content:'?'; position:absolute; left:0; color:var(--gold); font-family:'DM Mono', monospace; }
+
+  dl.glossary{ margin-top:8px; display:grid; gap:16px; max-width:720px; }
+  dl.glossary div{ border-top:1px solid var(--line); padding-top:12px; }
+  dl.glossary dt{ font-family:'DM Mono', monospace; color:var(--gold-bright); font-size:0.92rem; margin-bottom:4px; }
+  dl.glossary dd{ font-size:0.9rem; color:var(--ink-dim); margin:0; }
+
+  .close{ padding:64px 0 90px; }
+  .close h2{ font-size:clamp(2rem, 5vw, 2.8rem); max-width:600px; margin-bottom:16px; }
+  .close p{ max-width:560px; color:var(--ink-dim); }
+  .signoff{ margin-top:32px; font-family:'DM Mono', monospace; font-size:0.76rem; letter-spacing:0.1em; color:var(--gold); text-transform:uppercase; }
+</style>
+</head>
+<body>
+
+  <div class="wrap hero" id="day6">
+    <span class="eyebrow">10 Step Program to On-Chain Wealth — Day 6</span>
+    <h1>Neobanks: spending crypto <span>without selling it</span>.</h1>
+    <p>Everything through Day 5 has been infrastructure you configure yourself — Aave directly, LP pools directly, a simulator you're reading numbers off of. Neobanks are the packaged version of all of it: an app that wraps collateral, credit, and spending into something that feels like a bank account. Today we look at nine real products doing this right now, and — critically — which of them you can actually use from where you live.</p>
+    <div class="meta-row">
+      <span class="meta-item">Session <b>6 of 8</b></span>
+      <span class="meta-item">Duration <b>2 Hours</b></span>
+      <span class="meta-item">Maps to Step <b>04</b></span>
+    </div>
+  </div>
+
+  <div class="wrap agenda">
+    <h2>Session Agenda</h2>
+    <div class="agenda-grid">
+      <div class="agenda-item"><b>01</b><span>What Is a Crypto Neobank</span></div>
+      <div class="agenda-item"><b>02</b><span>Strike — Regulated, KYC'd, Bitcoin-Only</span></div>
+      <div class="agenda-item"><b>03</b><span>SALT Lending — The Pioneer of the Category</span></div>
+      <div class="agenda-item"><b>04</b><span>ether.fi — The All-In-One Account</span></div>
+      <div class="agenda-item"><b>05</b><span>Tria — Self-Custodial Trade, Earn, Spend</span></div>
+      <div class="agenda-item"><b>06</b><span>Avici — Spend It, Don't Sell It</span></div>
+      <div class="agenda-item"><b>07</b><span>SolCard — A Test of "Verify Before You Trust"</span></div>
+      <div class="agenda-item"><b>08</b><span>Zebec Cards — Multi-Chain, Multi-Tier</span></div>
+      <div class="agenda-item"><b>09</b><span>Surge — Bitcoin-Native Credit, No Wrapping, No KYC</span></div>
+      <div class="agenda-item"><b>10</b><span>Reading a Partnership Announcement: Velo × Zebec</span></div>
+      <div class="agenda-item"><b>11</b><span>A Cautionary Tale: When the Card Stops Working</span></div>
+      <div class="agenda-item"><b>12</b><span>US Availability — What's Actually Usable</span></div>
+      <div class="agenda-item"><b>13</b><span>Choosing a Neobank: A Framework</span></div>
+      <div class="agenda-item"><b>14</b><span>In-Class Exercise</span></div>
+      <div class="agenda-item"><b>15</b><span>Discussion, Glossary &amp; Before Day 7</span></div>
+    </div>
+  </div>
+
+  <section class="block">
+    <div class="wrap">
+      <span class="eyebrow">01 — What Is a Crypto Neobank</span>
+      <h2>Self-banking with a friendlier front door.</h2>
+      <p>A neobank is a bank-like app with no physical branches. A crypto neobank takes that same idea and builds it on top of, or adjacent to, blockchain rails instead of a traditional bank charter. In practice, that means some combination of holding crypto, earning yield on it, borrowing against it, and spending it — all wrapped in an app that looks and feels like Chase or Cash App, not like a DeFi dashboard.</p>
+      <p>The most important distinction to teach today is custody. Some of these products are genuinely self-custodial — your keys, your crypto, the app is just a friendly interface on top of a wallet you control. Others are custodial or semi-custodial — you're trusting the company to hold or manage your assets, the same trust relationship Section 01 of Day 1 warned you to take seriously. Every product this session gets evaluated on that axis first, before anything about cashback rates or card tiers.</p>
+      <div class="callout">
+        <span class="tag">Instructor Note</span>
+        <p>Every one of today's nine products is a real, live company — not a protocol you're auditing code for. That means terms, availability, and even whether the product still exists can change faster than anything else in this course. Treat every specific number in this session as "true as of when this was written," and have students verify directly before signing up for anything.</p>
+      </div>
+      <p>The order we cover these in is deliberate. We start with the two most fully regulated, KYC-required lenders — the natural entry point for anyone coming from traditional finance. From there we move through neobanks that mix custodial and self-custodial models to different degrees, and land on Surge in Section 09: the one product covered today that requires no identity verification at all. Watch how the tradeoffs shift as that KYC requirement loosens.</p>
+    </div>
+  </section>
+
+  <section class="block">
+    <div class="wrap">
+      <span class="eyebrow">02 — Strike</span>
+      <h2>Where this usually starts: regulated, KYC'd, Bitcoin-only.</h2>
+      <p>Strike — the same company behind the well-known Lightning Network payments app, founded by Jack Mallers — launched bitcoin-backed loans in May 2025 and crossed $10 million loaned within two days. It's a clean example of the fully regulated end of this spectrum: full identity verification is required to open an account at all, the same as it is for Strike's core payments product, and loans are underwritten and serviced like a real lending product rather than a DeFi position you manage yourself.</p>
+      <p>Strike offers two structures — a fixed-term loan and a revolving line of credit — for both individuals and businesses, in amounts starting around $10,000 with no published maximum (contact Strike directly above $5 million). Terms run up to 12 months, at a tiered rate starting around 9.5% APR, with a maximum initial LTV of 50%. There's no origination fee and no prepayment fee, and — worth calling out directly, since it surprises people coming from traditional lending — Strike doesn't report these loans to credit bureaus, so opening one doesn't touch your credit file. Your bitcoin collateral sits with Strike or one of its named capital providers and is explicitly not rehypothecated: not lent out, shorted, or transferred to any other third party while it backs your loan.</p>
+
+      <h4>A Real Lesson From a Real Drawdown</h4>
+      <p>Strike's original lending product launched directly into a period where bitcoin fell roughly 54% from peak to trough — and a meaningful number of borrowers got liquidated as a result, exactly the risk Day 2's LTV and liquidation material warned about. Strike's response is worth teaching directly: in 2026 it introduced a "volatility-protected" loan variant that literally cannot be liquidated by a price move, no matter how far bitcoin falls. The tradeoff for that guarantee is real — a steeper rate up to 14.2% APR, a shorter six-month term, and a more conservative 45% LTV ceiling. That's a clean, concrete example of a product evolving in direct response to a loss event, and a useful prompt for students: what would you actually pay to remove liquidation risk entirely?</p>
+
+      <div class="criteria-table">
+        <div class="criteria-row"><span class="k">KYC</span><span class="v">Required — full identity verification, the same as Strike's core payments app.</span></div>
+        <div class="criteria-row"><span class="k">Custody</span><span class="v">Held by Strike or a named capital provider — not rehypothecated, not lent out to third parties.</span></div>
+        <div class="criteria-row"><span class="k">Core Mechanism</span><span class="v">Fixed-term loan or revolving line of credit against BTC collateral, up to 50% initial LTV (or 45% on the volatility-protected variant).</span></div>
+        <div class="criteria-row"><span class="k">Credit Impact</span><span class="v">Not reported to credit bureaus — approval is collateral-based, not credit-score-based.</span></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="block">
+    <div class="wrap">
+      <span class="eyebrow">03 — SALT Lending</span>
+      <h2>The pioneer of the category — and proof it isn't new.</h2>
+      <p>SALT was founded in 2016 and launched publicly in 2017, making it one of the very first structured crypto-backed lending platforms to exist — for years, "getting a SALT loan" was close to generic shorthand for the entire category, the way "Google it" became shorthand for search. That history matters pedagogically: everything else in this session, including tools built in 2025 and 2026, is operating in a category SALT effectively opened.</p>
+      <p>SALT accepts BTC, ETH, USDC, and USDT as collateral, and — unlike Strike's single 50% ceiling — lets you choose your own LTV tier at signup: 30%, 50%, or 70%. Lower LTV means a lower rate and more cushion against a price drop; higher LTV means more cash per coin pledged, at a higher rate and a thinner safety margin. Published rates start at 7.49% APR at the 30% tier, on 1, 3, or 5-year fixed terms — and notably, that published rate is the same at every loan size, with no volume tiers or relationship pricing to negotiate. Approval requires no credit check, no income verification, no employment history, and no tax returns; SALT's own language is direct about this: "your crypto is your credit." Funding typically arrives within 24-48 hours of approval.</p>
+
+      <h4>A Staged Margin Call — Worth Contrasting With Aave</h4>
+      <p>SALT's liquidation process is more gradual than the health-factor model from Day 2, and worth walking through explicitly. At 75% LTV, you receive a first warning with no action taken. At 83.33% LTV, a formal margin call triggers, and you have 48 hours to bring the loan back down to 70% LTV — either by paying down principal or adding collateral — before liquidation proceeds. That's a fixed, published, staged process, rather than a continuously-calculated single health-factor number, and it's a useful comparison point for students who've only seen Aave's model so far.</p>
+
+      <div class="callout warn">
+        <span class="tag">Verify Before You Rely On This</span>
+        <p>SALT went through real, documented financial distress during the broader 2022 crypto credit crunch that also hit Celsius, Voyager, and BlockFi. Unlike those three, SALT did not collapse outright — it continued operating afterward under changed circumstances — but the exact details of what happened and what changed are worth having students look up directly rather than taking as settled history from this course alone.</p>
+      </div>
+
+      <div class="criteria-table">
+        <div class="criteria-row"><span class="k">KYC</span><span class="v">Required — standard government-ID verification, described by SALT as standard for "any regulated lender."</span></div>
+        <div class="criteria-row"><span class="k">Custody</span><span class="v">Held by SALT or its custodial partners for the loan term.</span></div>
+        <div class="criteria-row"><span class="k">Core Mechanism</span><span class="v">Choose your own LTV tier (30/50/70%) at signup — a direct rate-vs-cushion tradeoff you control.</span></div>
+        <div class="criteria-row"><span class="k">Track Record</span><span class="v">Oldest platform in this category (2016) — tested by, and survived in some form, the 2022 credit crunch.</span></div>
+      </div>
+
+      <p>Both Strike and SALT sit at the fully regulated, KYC-required end of the spectrum covered today. Everything from here through Section 08 mixes custodial and self-custodial models to different degrees — Section 09 lands on Surge, the one product in this lineup that requires none of it.</p>
+    </div>
+  </section>
+
+  <section class="block">
+    <div class="wrap">
+      <span class="eyebrow">04 — ether.fi</span>
+      <h2>The all-in-one account.</h2>
+      <p>ether.fi didn't start as a neobank. It started as a liquid restaking protocol on Ethereum — a way to stake ETH (and later, restake it to secure additional networks on top of Ethereum itself) while still holding a liquid, tradeable token representing that staked position, rather than having your ETH fully locked and idle. That protocol has its own governance token, ETHFI, its own DAO, forum, and on-chain voting through Snapshot. The Cash product covered today is a separate, newer layer built on top of that foundation — and worth noting explicitly: ether.fi's own terms state the Cash card is not affiliated with the underlying protocol and is issued under separate terms by a separate issuer. You're evaluating two related but legally distinct things when you use ether.fi.</p>
+      <p>The mechanism that matters most for this course: you can spend without selling, by taking a loan against your entire portfolio rather than liquidating any of it. There's no fixed repayment schedule — you repay whenever you choose. That's the exact same self-banking loop from Day 1, wrapped in a Visa card.</p>
+
+      <h4>Four Membership Tiers</h4>
+      <div class="criteria-table">
+        <div class="criteria-row"><span class="k">Core</span><span class="v">Everyday account tier — 3% cashback, global travel and coverage benefits, up to $10,000 in account balance protection.</span></div>
+        <div class="criteria-row"><span class="k">Luxe</span><span class="v">Adds a metal card, free airport lounge passes, and 10% off a bundle of subscriptions (1Password, ChatGPT, Discord, Nintendo, and others).</span></div>
+        <div class="criteria-row"><span class="k">Pinnacle</span><span class="v">Unlimited airport lounge access, dedicated support, 20% off the same travel/subscription bundle.</span></div>
+        <div class="criteria-row"><span class="k">VIP</span><span class="v">4% cashback (the only tier above 3%), a gold card, curated venture access, direct team/concierge access, 30% off the bundle.</span></div>
+      </div>
+
+      <h4>Balance Protection — Not Yet Live</h4>
+      <p>ether.fi advertises insurance-backed account balance protection of up to $500,000 per account, funded by ether.fi's own capital plus a licensed underwriter, with smart-contract auditing from Certora, Nethermind, Halborn, Hypernative, and Zellic. As of this writing, the program itself is explicitly marked "not yet live" on ether.fi's own site — a good reminder to distinguish what a neobank currently does from what it's advertising as coming.</p>
+
+      <h4>Real Multi-Asset, Multi-Chain Scope</h4>
+      <p>This isn't a single-chain product. ether.fi supports 100+ assets — including crypto, tokenized S&amp;P 500 exposure, tokenized gold, and stablecoins like USDC, EURC, and its own eUSD — across 15+ networks, among them Ethereum, Bitcoin, Arbitrum, Base, BNB Chain, Optimism, Polygon, Solana-adjacent chains, and the Hyperliquid and Tempo networks. For a student who's only interacted with Ethereum-based tools so far, this is a useful example of what "multi-chain by default" actually looks like in a live consumer product.</p>
+
+      <div class="criteria-table">
+        <div class="criteria-row"><span class="k">Custody</span><span class="v">Self-custodial protocol — ether.fi explicitly states it is not a regulated financial institution.</span></div>
+        <div class="criteria-row"><span class="k">Core Mechanism</span><span class="v">Borrow against your full portfolio (crypto, tokenized stocks, metals) instead of selling.</span></div>
+        <div class="criteria-row"><span class="k">Card Network</span><span class="v">Visa, accepted at 100M+ merchants, Apple Pay and Google Pay supported.</span></div>
+        <div class="criteria-row"><span class="k">Governance</span><span class="v">ETHFI token — DAO forum, on-chain Snapshot voting, staking.</span></div>
+      </div>
+
+      <h4>Verifiable, Not Just Claimed</h4>
+      <p>One thing worth teaching directly from this example: ether.fi's numbers aren't only marketing copy. The protocol is independently tracked on DeFi Llama and Token Terminal — third-party sites that surface a protocol's real on-chain activity, total value locked, and revenue, pulled directly from the blockchain rather than from the company's own claims — plus its own Dune Analytics dashboard. There's also a public bug bounty through Immunefi, an established platform where independent security researchers get paid to find and report vulnerabilities before attackers do. When you're teaching students how to evaluate a neobank's trustworthiness, "can I verify this independently" is a concrete, checkable question, and ether.fi is a good example of a product that makes that possible.</p>
+      <p>Separately from the Personal account covered above, ether.fi also offers a Business account, and ETHFI itself can be staked directly for its own rewards — a lever that's independent of, and can stack alongside, card spending toward membership-tier benefits.</p>
+    </div>
+  </section>
+
+  <section class="block">
+    <div class="wrap">
+      <span class="eyebrow">05 — Tria</span>
+      <h2>Self-custodial trade, earn, and spend.</h2>
+      <p>Tria bills itself as a "neofinance" app rather than a neobank — the distinction being that active trading is as central to the product as spending is. It's self-custodial using MPC (multi-party computation) wallets built on a threshold signature scheme, meaning the key that authorizes a transaction is never assembled in one place — it's split across multiple parties and only ever used in pieces. This is a meaningfully different self-custody model than the single-private-key wallet you've used throughout this course, and worth naming explicitly as its own category.</p>
+      <p>Tria's signature piece of infrastructure is "BestPath" — a routing engine that scans dozens of possible paths across 200+ supported chains (Tria's own marketing shows an example selecting the best of 28 available routes) and picks the most efficient one for a given swap, trade, or transfer. The comparison Tria draws is to a maps app finding the fastest route through traffic, just applied to on-chain execution instead of streets.</p>
+
+      <h4>Three Card Tiers</h4>
+      <div class="criteria-table">
+        <div class="criteria-row"><span class="k">Virtual — $25/yr</span><span class="v">1.5% cashback, up to 6% invest/earn access, $2,000 price protection, $10,000 purchase protection, $1M daily transaction limit.</span></div>
+        <div class="criteria-row"><span class="k">Signature — $109/yr</span><span class="v">4.5% cashback, up to 10% invest/earn access, $750/day ATM withdrawal, lounge and luxury hotel access.</span></div>
+        <div class="criteria-row"><span class="k">Premium — $250/yr</span><span class="v">6% cashback (metal card), up to 15% invest/earn access, same ATM and lounge benefits as Signature.</span></div>
+      </div>
+      <p>One detail worth flagging directly to students: that cashback is paid out in Tria's own TRIA token, not cash or a stablecoin — meaning its real-world value floats with TRIA's market price, and a "6% cashback" headline number isn't a fixed dollar figure the way it would be on a traditional card.</p>
+
+      <h4>Trading and Yield — The More Aggressive Half of the Product</h4>
+      <p>Beyond spending, Tria offers on-chain yield up to roughly 15% on idle crypto, and perpetuals trading — on both crypto and tokenized equities — with leverage up to 50x. That leverage figure is meaningfully more aggressive than anything else in this session, and worth flagging as materially higher risk than the credit-line or debit-card products around it. Tria reports over 500,000 users and is live across multiple ecosystems beyond its own app — including a Decibel perpetuals integration on Aptos, JPYC stablecoin spending on Polygon (usable specifically across Japan), and chain-abstracted access into the Injective ecosystem without manual bridging.</p>
+
+      <div class="callout warn">
+        <span class="tag">Verify Before You Rely On This</span>
+        <p>Tria's U.S. availability is genuinely unclear as of this writing. Several sources describe Tria as unavailable to U.S. residents entirely; other, more recent sources describe an active U.S. card program with a named local issuing partner (Third National), separate from the entity — Nimbus LLC, a Delaware company — that issues the card internationally. This is exactly the kind of detail that can flip between when this course was written and when you're reading it — confirm directly in the app with your real state selected before assuming either answer.</p>
+      </div>
+
+      <h4>A Real Limitation Worth Naming</h4>
+      <p>Tria requires pre-converting crypto into a spending balance before you load the card — unlike roughly 40% of competing crypto cards, which auto-convert on every individual purchase. More significantly, once funds are loaded onto a Tria card, there's currently no way to unload them back out, a limitation shared by only around 30% of competing crypto cards industry-wide. Practically, that means treating a Tria load as a one-way decision — don't load more than you're genuinely ready to spend.</p>
+      <p>On the growth side, independent community reporting has cited Tria pushing over $20 million in transaction volume within a three-month window, with peak days exceeding $1 million in card spend — figures worth treating as self-reported/community data rather than an audited company statement, but a useful signal of real usage at scale for a product this young. Tria also runs a season-based rewards structure (Season 1, 2, 3 and onward), where users accumulate XP that determines an eventual allocation of USDT and staked TRIA at each season's close — a gamified loyalty layer on top of the base cashback program.</p>
+    </div>
+  </section>
+
+  <section class="block">
+    <div class="wrap">
+      <span class="eyebrow">06 — Avici</span>
+      <h2>"Spend it, don't sell it."</h2>
+      <p>Avici is the newest and smallest of today's products — a San Francisco-based startup built around a single clear pitch, spelled out on its own homepage: forget wallets, exchanges, and banks. Deposit crypto, get a matching line of spending power on a secured Visa credit card, and never actually sell the underlying asset unless you choose to.</p>
+      <p>The mechanism behind that pitch is what Avici calls a Loan Escrow model. Your USDC collateral doesn't sit on Avici's own balance sheet the way funds would at a traditional custodial lender — it stays locked in a smart contract you can verify, and settlement against your card charges happens on a rolling 1-to-7-day cycle rather than instantly converting your crypto to fiat on every swipe. Top-ups from other tokens into USDC route through DEX aggregators automatically, with no additional fee from Avici itself.</p>
+
+      <h4>Self-Custody, Made for Beginners</h4>
+      <p>Avici's self-custody model runs on a ZeroDev smart wallet with mandatory biometric passkey approval on every transaction — no seed phrase to lose, no single private key to protect, but still genuinely non-custodial. KYC runs through SumSub with continuous AML monitoring, a widely-used third-party identity provider rather than an in-house process Avici controls itself. The whole design is explicitly aimed at someone who's never held their own keys before, more than at a DeFi-native user who already expects to manage a seed phrase directly.</p>
+
+      <h4>Beyond the Card</h4>
+      <p>Avici also offers virtual USD and EUR bank accounts through licensed partners — complete with ACH routing numbers, SEPA IBANs, and Fedwire capability — with incoming fiat automatically converted to USDC. A business banking product is in early access, aimed at crypto-native businesses and DAOs that need multi-card and treasury features. Avici's own public roadmap (its "manifesto," published separately from the main site) describes ambitions well beyond a debit card — on-chain savings accounts, global payroll, lending markets, and a stablecoin-based banking layer — none of which is live yet.</p>
+
+      <div class="criteria-table">
+        <div class="criteria-row"><span class="k">Custody</span><span class="v">Self-custodial via ZeroDev smart wallet + mandatory passkey approval, no seed phrase required.</span></div>
+        <div class="criteria-row"><span class="k">Core Mechanism</span><span class="v">Loan Escrow — USDC collateral locked in a smart contract, settled against card charges every 1–7 days.</span></div>
+        <div class="criteria-row"><span class="k">Card Network</span><span class="v">Visa, zero transaction fees, zero FX markup, free virtual Platinum tier.</span></div>
+        <div class="criteria-row"><span class="k">Stage</span><span class="v">Early — among the smaller teams in today's lineup, several roadmap features (banking, payroll, lending) not yet live.</span></div>
+      </div>
+
+      <h4>Community-First, Not Institution-First</h4>
+      <p>Avici's growth model leans heavily on invite codes and a public "manifesto" document rather than institutional partnerships or a large marketing budget — a smaller-company growth pattern worth contrasting directly with ether.fi's insurance-and-audit-heavy positioning or Tria's multi-ecosystem integrations. That's not automatically a red flag, but it is a different kind of company to evaluate: less third-party verification exists today, and independent reviewers have specifically flagged that Avici's own documentation contains internal inconsistencies about country-by-country availability, recommending direct confirmation with support before funding an account.</p>
+      <p>The state-by-state U.S. restriction pattern here is worth connecting back to Surge's from Section 09: Avici's Loan Escrow model is a genuine credit product, not a simple prepaid card, which plausibly explains why its availability follows the same state-money-transmitter logic that shapes ether.fi's exclusions — as opposed to a simple debit-style card, which tends to face fewer state-specific hurdles.</p>
+    </div>
+  </section>
+
+  <section class="block">
+    <div class="wrap">
+      <span class="eyebrow">07 — SolCard</span>
+      <h2>Custodial, US-targeted, and a genuine test of "verify before you trust."</h2>
+      <p>SolCard is a Solana-rooted crypto debit card: load SOL, USDC, USDT, BTC, ETH, or 50+ other tokens across 9+ blockchain networks, and spend the converted USD balance anywhere Visa or Mastercard is accepted. It runs two tiers — Virtual (no identity verification required, $5,000 monthly limit, 5% top-up fee, ready in about 30 seconds) and Platinum (verification required, no monthly limit, 0% top-up fees, physical card plus Apple Pay/Google Pay). SolCard runs a dedicated marketing page specifically targeting U.S. residents, claiming nationwide availability while still hedging with "check your specific state" — the same pattern Zebec follows in Section 08.</p>
+
+      <h4>How the Money Actually Moves</h4>
+      <p>SolCard publishes an unusually direct explanation of its own custody structure, worth reading in the company's own words: SolCard itself is "the program manager and the technology platform. That is the whole of our role." It states plainly that it is not a bank, not an electronic money institution, and not a card issuer — your card is issued by a separate, licensed third-party institution, and SolCard never holds client funds directly. Once your crypto converts to a USD balance, that balance sits with the issuing institution, which is also the party that authorizes every transaction and can block your card. SolCard states outright that it cannot reverse a settled transaction or lift a block placed by that institution, no matter how directly you ask.</p>
+      <p>That's about as clear a real-world illustration as you'll find of the dependency structure Section 11's cautionary tale is built around — a neobank's own app is rarely the entity actually moving your money.</p>
+
+      <h4>What Independent Review Turned Up</h4>
+      <p>This is where SolCard asks for more scrutiny than anything else in today's lineup. Independent review found no named regulated bank behind the operating entity (SC Payments Limited, incorporated in Hong Kong) — no FDIC insurance, no locatable e-money license. Compliance is reported to run through a payments partner, Alchemy Pay, though that partner isn't actually named anywhere in SolCard's own terms, resting instead on third-party reporting. SolCard's own terms bar Hong Kong residents from the service and reserve the right to forfeit balances on accounts showing Hong Kong indicators — an unusual structure for a Hong Kong-incorporated company. There's also a documented precedent for the "block you don't control" risk: a mass freeze of no-KYC virtual cards in June 2025, locked until holders completed verification or withdrew.</p>
+      <p>Automated trust-scanning tools (ScamAdviser, Scam Detector) return low trust scores for the domain — worth treating as a noisy signal rather than proof of anything specific, since those tools weight factors like server neighbors and domain age alongside anything substantive, but a real data point nonetheless. At least one detailed, unresolved dispute complaint appears in public reviews, describing weeks of automated support responses on an unauthorized-charge claim. SolCard's own blog includes a direct "Is SolCard Legit?" post responding to exactly these concerns — useful context either way, and itself worth noting: a company that feels the need to publicly rebut "is this a scam" is telling you something about the questions it's fielding.</p>
+
+      <div class="criteria-table">
+        <div class="criteria-row"><span class="k">Custody</span><span class="v">Custodial — crypto converts to a USD balance held by an unnamed third-party issuing institution, not by SolCard.</span></div>
+        <div class="criteria-row"><span class="k">Core Mechanism</span><span class="v">Load crypto across 9+ networks, spend the converted USD balance via a tiered Visa card.</span></div>
+        <div class="criteria-row"><span class="k">Card Network</span><span class="v">Visa, 150M+ merchants claimed, Apple Pay/Google Pay supported.</span></div>
+        <div class="criteria-row"><span class="k">Caution Level</span><span class="v">Highest of today's lineup — no named bank/e-money license, a documented 2025 mass-freeze precedent, low third-party trust scores.</span></div>
+      </div>
+
+      <div class="callout warn">
+        <span class="tag">Use This One to Teach Verification</span>
+        <p>SolCard is the strongest example in this session of the gap between polished marketing and what independent review actually finds. Have students work through Section 14's exercise with SolCard as one of their two picks — the exercise's "processor risk" question in particular has an unusually concrete answer here.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="block">
+    <div class="wrap">
+      <span class="eyebrow">08 — Zebec Cards</span>
+      <h2>Multi-chain, multi-tier.</h2>
+      <p>Zebec started on Solana and has since expanded into a genuinely multi-chain payments network, with its cards now supporting 150+ tokens across 18+ blockchains — including BNB Smart Chain, Solana, Ethereum, XRP Ledger, Tron, Sui, Stellar, Base, and Bitcoin itself. That breadth is the headline feature: most products in this session pick one or two chains to support well, while Zebec is explicitly building for "load from anywhere."</p>
+
+      <h4>Three Cards, Three Jobs</h4>
+      <div class="criteria-table">
+        <div class="criteria-row"><span class="k">Silver</span><span class="v">Single-use virtual card, no fees, instant issuance — get a fresh card number for one specific purchase. Spend limit $1,000/card, $10,000/day. USD, EUR, or GBP.</span></div>
+        <div class="criteria-row"><span class="k">Carbon</span><span class="v">Reloadable card built for daily spending and recurring subscriptions — same card number across transactions. $1,000 per load, $10,000/day. USD only.</span></div>
+        <div class="criteria-row"><span class="k">Black</span><span class="v">Higher limits, invitation-based, enterprise-oriented. Currently offline for a platform "remodel," expected back in late 2026.</span></div>
+      </div>
+      <p>All three run on Mastercard rather than Visa — worth noting explicitly, since it's a different acceptance network than every other card covered today, and matters if a specific merchant or country you care about only takes one network reliably.</p>
+
+      <h4>Part of a Larger Payments Company</h4>
+      <p>Zebec's card business sits inside a much broader "Super App" ecosystem than a single card product. Zebec Pay streams real-time payroll — salaries arriving continuously as they're earned rather than on a biweekly schedule — and the company also runs a DePIN (decentralized physical infrastructure) pilot and enterprise payroll and custom card programs for business clients. The native token, ZBCN, carries its own staking program and DAO governance, with a published MiCA-compliant whitepaper aimed at European regulatory standards. That's a meaningfully different company shape than ether.fi, Tria, or Avici — Zebec is building payments infrastructure that other products (like the Velo partnership in Section 10) plug into, not only a single consumer-facing card.</p>
+
+      <div class="criteria-table">
+        <div class="criteria-row"><span class="k">Custody</span><span class="v">Funds become issuer-held e-money once loaded onto a card — crypto is self-custodied up until that point.</span></div>
+        <div class="criteria-row"><span class="k">Card Network</span><span class="v">Mastercard, accepted at 100M+ merchants worldwide.</span></div>
+        <div class="criteria-row"><span class="k">Ecosystem</span><span class="v">Zebec Super App — real-time payroll streaming, DePIN pilot, staking, DAO governance via ZBCN.</span></div>
+      </div>
+
+      <h4>Why a "Single-Use" Card Is a Real Feature</h4>
+      <p>Silver's single-use design is worth explaining to students who've only used reloadable cards — every time you fund one, you get a fresh card number rather than reusing the same one. That's a deliberate fraud-containment and privacy tool: if a merchant's system is ever compromised, only that one card number is exposed, not an account you use everywhere. It's the same logic behind "virtual card numbers" some traditional banks offer, applied natively to a crypto-funded card.</p>
+      <p>Zebec's own marketing shows its card accepted at recognizable global merchants — Airbnb, Amazon, Uber, Spotify, TikTok, Twitch, and Expedia among them — which is a more concrete proof point than a bare "100M+ merchants" claim on its own. On the regulatory side, ZBCN's published whitepaper is specifically built to MiCA standards — the EU's Markets in Crypto-Assets regulation, the closest thing Europe has to a unified crypto-asset rulebook — which signals Zebec is building toward compliance with one of the stricter major regulatory regimes, not avoiding it.</p>
+    </div>
+  </section>
+
+  <section class="block">
+    <div class="wrap">
+      <span class="eyebrow">09 — Surge</span>
+      <h2>Bitcoin-native credit, with no wrapping required.</h2>
+      <p>Surge is the one product this session that connects directly back to Day 2. Instead of a general "deposit any crypto, borrow a stablecoin" model like Aave, Surge is built specifically around Bitcoin — and specifically around never wrapping it. Your BTC sits in a Taproot-based smart vault, secured by threshold cryptography shared between you and a network of signers Surge calls the Distributed Custody Network. Every credit line is its own individually inspectable Taproot UTXO — you can look up your exact vault on a public block explorer at any time, rather than trusting a dashboard number.</p>
+      <p>Surge describes its core design principle as zero rehypothecation: your Bitcoin is never lent out, moved, or repurposed while it backs your credit line — a direct contrast to how a wrapped asset like WBTC works once it's inside a protocol like Aave, where the wrapped token itself is what's actually held and can, depending on the protocol, be part of a broader lending pool. If Surge's backend stopped operating entirely, a script-enforced "unilateral exit" — a Bitcoin-native timelock path — returns your BTC to you with no permission needed from Surge or anyone else.</p>
+
+      <h4>How the Terms Compare</h4>
+      <p>Surge is explicit about positioning itself against three different categories of Bitcoin-backed lending, in its own published comparison: traditional TradFi lenders (like Ledn, Strike, Arch Lending, Figure), wrapped-BTC DeFi protocols (like Aave and Morpho), and multi-sig/DLC-based lenders (like Debifi and Firefish).</p>
+      <div class="criteria-table">
+        <div class="criteria-row"><span class="k">Rates</span><span class="v">From 6.9% variable, or 9.9% fixed — versus 8.5%–21% typical across the other three categories Surge compares itself to.</span></div>
+        <div class="criteria-row"><span class="k">Speed to Funds</span><span class="v">~30 minutes from BTC deposit to usable credit, versus days for most TradFi lenders.</span></div>
+        <div class="criteria-row"><span class="k">LTV</span><span class="v">50% currently, described as expanding — versus up to 70–78% at some TradFi and DLC lenders (higher LTV isn't necessarily safer; it just means less price-drop buffer before liquidation).</span></div>
+        <div class="criteria-row"><span class="k">Term</span><span class="v">Rolling 12-month credit line, renewable without reapplying — not a fixed-schedule loan.</span></div>
+      </div>
+      <p>No KYC is required to use Surge, and the underlying infrastructure is described as open — meaning other builders (wallets, exchanges, other neobanks, even a treasury product) can plug into the same Bitcoin-native credit rails under their own brand, rather than Surge being a closed, single-app product. Security audits from Rearden Code and CredShields were published recently, alongside an active public GitHub with 14 repositories.</p>
+
+      <h4>What "Taproot" Actually Means Here</h4>
+      <p>Taproot is a 2021 Bitcoin network upgrade that made it possible to build more complex spending conditions — like "either party can act with a signature, or a timelock kicks in after N blocks" — directly on Bitcoin itself, without needing a separate blockchain or a wrapped token to express that logic. That's the specific technical capability Surge is built on: your vault's rules (who can sign, when the timelock unlocks, how the exit path works) are enforced by Bitcoin's own script language, not by a company's backend database. It's the same category of infrastructure upgrade that eventually made things like the Lightning Network's more advanced channel types possible.</p>
+
+      <h4>A Worked Example</h4>
+      <p>Say you're holding 0.5 BTC and want dollar liquidity without selling. Surge's own example calculator shows that locking 0.5 BTC as collateral, at its variable rate starting from 6.9% APR, costs roughly $3.80 a day in interest against a 50% LTV credit line — meaning your available credit is worth about half your collateral's current dollar value at any given moment. Draw a portion of that line for a real expense, and only that drawn amount accrues interest; the undrawn remainder of your approved line costs you nothing sitting idle. Repay a portion from other income next month, and your available credit grows back by exactly that amount immediately, with no new application. That's the practical difference between a credit line and a fixed loan: the number moves in both directions as you use it, and only what's actually drawn costs you anything.</p>
+
+      <div class="callout warn">
+        <span class="tag">Watch For a Name Collision</span>
+        <p>Searching "Surge credit card" turns up an entirely unrelated product: Surge® Platinum Mastercard®, a traditional credit-building card for people with bad credit, issued by Celtic Bank and serviced by Continental Finance. It has nothing to do with crypto or Bitcoin. Make sure any research your students do lands on surge.credit specifically, not that card.</p>
+      </div>
+      <div class="callout go">
+        <span class="tag">Direct Tie-Back to Day 2</span>
+        <p>Compare Surge to Aave's WBTC collateral model directly with students here. Aave requires wrapping BTC into an ERC-20 token custodied by a third party to use it as collateral. Surge keeps BTC natively on the Bitcoin blockchain the entire time, at a more conservative LTV than Aave's typical BTC collateral terms. Neither is "wrong" — but they represent two genuinely different trust models and risk/reward tradeoffs for the exact same goal: borrowing against Bitcoin without selling it.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="block">
+    <div class="wrap">
+      <span class="eyebrow">10 — Reading a Partnership Announcement</span>
+      <h2>Velo × Zebec: what a press release actually tells you.</h2>
+      <p>On August 7, 2026, Velo Protocol — a blockchain-based financial infrastructure platform focused specifically on "PayFi" (payment finance, as distinct from lending or trading protocols) — announced a partnership with Zebec, the company behind Section 08's card lineup, to build something called the Velo Card. The announcement itself came through Velo's official X account, framed around combining Velo's payment infrastructure with Zebec's existing card technology to give users "another way to move seamlessly from crypto to everyday payments."</p>
+      <p>This is a genuinely useful exercise in reading industry news critically, because the announcement contains almost no concrete product detail: no launch date, no card tiers, no fee structure, no country availability, no pricing. What both companies did commit to, in their public statements, was a shared emphasis on security, transparency, scalability, and interoperability — language that signals direction and priorities without committing to a single verifiable fact a student could act on today.</p>
+      <p>What the announcement does contain is a clear pattern to notice: specialized crypto-payment infrastructure companies (Velo, focused narrowly on PayFi rails) are increasingly partnering with, rather than trying to independently rebuild, established card-issuing platforms that already have the compliance and merchant-network relationships in place (Zebec). Coverage of the announcement itself framed it as a signal of "further consolidation in the crypto payments space" — infrastructure specialists and proven card rails combining, rather than every company building every layer from scratch.</p>
+
+      <h4>What "PayFi" Actually Covers</h4>
+      <p>PayFi has emerged as its own category label distinct from the DeFi lending and LP infrastructure covered in Days 2 and 3 — it specifically means blockchain systems built around the mechanics of payments themselves: settlement speed, interoperability between chains and traditional rails, and moving value for a transaction rather than for a trade or a loan. Velo positions itself as infrastructure inside that category, meaning its business is providing the plumbing other companies build consumer products on top of — much closer to what Zebec's own card business already does than it might first appear, which is likely part of why this specific partnership makes sense for both sides.</p>
+
+      <h4>A Simple Framework for Reading Any Announcement Like This</h4>
+      <p>Give students three questions to run any partnership announcement through, using this one as the example: What specific product or feature is named? (The Velo Card — named, but with zero specifications.) What concrete numbers are given? (None — no date, no fee, no country list.) What's the actual business logic being signaled? (An infrastructure specialist choosing to plug into an established card platform rather than build one from scratch.) Two of three questions come back empty here — that's the tell that this is a direction-setting announcement, not a launch.</p>
+
+      <div class="callout">
+        <span class="tag">Instructor Note</span>
+        <p>Treat this one as a signal to watch, not a product to evaluate yet — there's nothing live to sign up for, and by the time this cohort meets, "more details coming soon" may or may not have materialized. Use it to teach the skill of separating an announcement's actual content from its framing language.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="block">
+    <div class="wrap">
+      <span class="eyebrow">11 — A Cautionary Tale</span>
+      <h2>When the card stops working, but your crypto doesn't.</h2>
+      <p>Every product covered today puts a licensed, regulated payment processor or issuing bank somewhere underneath the app — Tria names Third National for its U.S. program and Nimbus LLC internationally; Zebec's Black card runs through a partner called Mobilum; Avici and ether.fi both work through card-issuing partners even though neither names them prominently on their main marketing pages. SolCard, back in Section 07, is the most explicit about this of anyone in today's lineup — its own security page states plainly that a separate issuing institution holds your balance and makes every authorization and block decision, and that SolCard itself cannot override either one. That layer is exactly what makes a Visa or Mastercard actually work at a checkout counter. It's also a real, separate point of failure from anything covered in Days 1 through 5.</p>
+      <p>The clearest historical example: Wirecard, a major European payment processor, collapsed in June 2020 after a massive accounting fraud was uncovered — roughly €1.9 billion in supposedly held funds turned out not to exist. Wirecard had been the processor behind numerous crypto debit cards at the time, including early versions of products from TenX and Crypto.com. When UK regulators temporarily suspended Wirecard's local subsidiary as the scandal broke, those cards stopped working for users almost overnight — not because anything happened to the users' actual crypto holdings, which were generally held separately by the crypto companies themselves, but because the processor that physically moved money at the point of sale had gone dark.</p>
+      <div class="callout warn">
+        <span class="tag">The Lesson, Stated Plainly</span>
+        <p>Self-custody protects your crypto. It does not automatically protect your ability to spend it. A card is a promise from a processor to honor a transaction, and that promise is only as good as the processor behind it — a dependency that exists no matter how non-custodial the wallet underneath the card actually is.</p>
+      </div>
+      <p>This doesn't mean any of today's nine products are at particular risk of the same thing — it means the risk category exists structurally for all of them, and it's worth teaching students to ask "who's the actual processor or issuing bank here?" as a standing question, the same way custody model became a standing question back in Section 01.</p>
+    </div>
+  </section>
+
+  <section class="block">
+    <div class="wrap">
+      <span class="eyebrow">12 — US Availability</span>
+      <h2>What's actually usable from where you live.</h2>
+      <p>This is the section that matters most if you're taking this course from the U.S. Crypto card and neobank products very commonly restrict U.S. users entirely, or restrict specific U.S. states, because money-transmitter licensing is handled state by state, not federally. Availability below reflects the most recent information found for each product — confirm directly before you rely on any of it.</p>
+      <div class="avail-table-scroll">
+        <table class="avail-table">
+          <thead><tr><th>Product</th><th>US Status</th><th>Detail</th></tr></thead>
+          <tbody>
+            <tr><td class="name">Strike</td><td><span class="status partial">Partial</span></td><td>Bitcoin-backed loans available in select U.S. states — availability and minimum loan amounts vary by state. Full KYC required regardless of location.</td></tr>
+            <tr><td class="name">SALT Lending</td><td><span class="status partial">Partial</span></td><td>Lends across most U.S. states plus a growing international list — check saltlending.com/map-list for the current one. Full KYC required regardless of location.</td></tr>
+            <tr><td class="name">ether.fi</td><td><span class="status partial">Partial</span></td><td>Available in most states; unavailable in 20 named states (AZ, DE, GA, ID, LA, MD, MS, MO, MT, NV, NM, ND, OH, OR, RI, SD, TN, VT, WA, WI). Illinois is supported.</td></tr>
+            <tr><td class="name">Tria</td><td><span class="status unclear">Unclear</span></td><td>Conflicting reports — some sources say unavailable to U.S. residents entirely, others describe an active U.S. program with a named local card issuer. Verify directly in-app.</td></tr>
+            <tr><td class="name">Avici</td><td><span class="status partial">Partial</span></td><td>Available in roughly 31 named states, including Illinois, California, New York, and Texas. Several other states are not yet supported — check the current list.</td></tr>
+            <tr><td class="name">SolCard</td><td><span class="status yes">Available</span></td><td>Dedicated US marketing page claims nationwide availability, no state-exclusion list published — but see Section 07's independent-review findings before treating "available" as the only relevant question here.</td></tr>
+            <tr><td class="name">Zebec Cards</td><td><span class="status yes">Available</span></td><td>No U.S. exclusion found; company is U.S.-based. Country/merchant coverage varies by card tier (Silver/Carbon/Black).</td></tr>
+            <tr><td class="name">Surge</td><td><span class="status yes">Likely Available</span></td><td>No published state-exclusion list found (unlike ether.fi/Avici) — plausibly because it's non-custodial and requires no KYC, which may avoid triggering the same state money-transmitter licensing. Listed on the U.S. App Store, governed under California law. This is inferred from absence of a restriction, not a confirmed "all 50 states" statement — verify directly.</td></tr>
+            <tr><td class="name">Velo × Zebec</td><td><span class="status unclear">Not Live</span></td><td>Announced August 2026, no product launched yet — no availability information exists.</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="callout">
+        <span class="tag">For This Cohort Specifically</span>
+        <p>For students based in Illinois: Strike and SALT both lend broadly across U.S. states, but neither publishes an Illinois-specific confirmation on their public pages — worth a direct check during application, same as Tria below. ether.fi and Avici both explicitly confirm Illinois as supported. Zebec and SolCard show no evidence of U.S. restriction — though SolCard's availability being clear doesn't resolve the separate trust questions raised in Section 07. Surge likely has no state restriction given its non-custodial, no-KYC design, but that's an inference, not a confirmed statement — worth a direct check before relying on it. Tria is the one product on this list you should not assume either way without checking directly.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="block">
+    <div class="wrap">
+      <span class="eyebrow">13 — Choosing a Neobank</span>
+      <h2>A framework, not a recommendation.</h2>
+      <p>None of today's nine products is "the best" in the abstract — each optimizes for a different priority. Use these four questions, in order, whenever you're evaluating a new one:</p>
+      <div class="steps-mini">
+        <div class="step-mini"><span class="dot"></span><p><b style="color:var(--ink);">Custody first.</b> Is this genuinely self-custodial, or are you trusting a company to hold your assets? Neither is automatically disqualifying, but you should always know which one you're choosing.</p></div>
+        <div class="step-mini"><span class="dot"></span><p><b style="color:var(--ink);">Mechanism second.</b> Is spending funded by a credit line against collateral (ether.fi, Avici, Surge), by pre-loading converted crypto (Zebec), or by active trading (Tria)? Each carries a different risk profile.</p></div>
+        <div class="step-mini"><span class="dot"></span><p><b style="color:var(--ink);">Availability third.</b> A perfect product you can't legally use from your state is not a real option. Check this before you get attached to a feature set.</p></div>
+        <div class="step-mini"><span class="dot"></span><p><b style="color:var(--ink);">Stage last.</b> A newer, smaller product (Avici) carries different risk than an established one with real audited numbers (ether.fi, Zebec). That's not a reason to avoid it — it's a factor to weigh consciously.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="block">
+    <div class="wrap">
+      <span class="eyebrow">14 — In-Class Exercise</span>
+      <h2>Run two products through the full framework.</h2>
+      <p>Pair up. Each pair picks two of today's nine products — deliberately choose two that seem different from each other, not two that seem similar. Work through all five questions below for both, then compare notes with another pair.</p>
+      <div class="steps-mini">
+        <div class="step-mini"><span class="dot"></span><p><b style="color:var(--ink);">Custody:</b> Is it genuinely self-custodial, custodial, or something in between (like Zebec's load-then-issuer-held model)?</p></div>
+        <div class="step-mini"><span class="dot"></span><p><b style="color:var(--ink);">Mechanism:</b> Credit line against collateral, pre-loaded balance, or active trading? What's the worst-case scenario specific to that mechanism?</p></div>
+        <div class="step-mini"><span class="dot"></span><p><b style="color:var(--ink);">Availability:</b> Check the Section 12 table. Is it actually usable from Illinois? From wherever you'd realistically use it?</p></div>
+        <div class="step-mini"><span class="dot"></span><p><b style="color:var(--ink);">Stage:</b> How much independent verification exists — audits, third-party trackers like DeFi Llama, published security reviews — versus how much is the company's own word?</p></div>
+        <div class="step-mini"><span class="dot"></span><p><b style="color:var(--ink);">Processor risk:</b> Per Section 11, can you identify the actual issuing bank or processor behind the card? If you can't find one named clearly, treat that itself as a data point.</p></div>
+      </div>
+      <p>Close by having each pair state, out loud, which of their two products they'd actually fund with real money first — and the one specific factor from the five above that made the difference.</p>
+    </div>
+  </section>
+
+  <section class="block">
+    <div class="wrap">
+      <span class="eyebrow">15 — Discussion</span>
+      <h2>Talk through these before we close.</h2>
+      <ul class="discussion">
+        <li>Of the nine products covered today, which custody model would you personally trust with real money, and why?</li>
+        <li>Strike and SALT require full KYC; Surge requires none. What would actually make you choose the fully regulated end of that spectrum over the fully anonymous end — or vice versa?</li>
+        <li>Surge and Aave solve the same problem — borrowing against Bitcoin — with different trust models. Which would you choose, and does your answer change based on how much BTC you're collateralizing?</li>
+        <li>Tria's cashback is paid in its own token rather than cash. What does that change about how you'd actually value "up to 6% cashback"?</li>
+        <li>The Velo × Zebec announcement had almost no concrete detail. What would you need to see before treating a partnership announcement like this as investable news rather than just a signal?</li>
+        <li>Knowing what happened with Wirecard in 2020 — and what SolCard's own security page admits — would you change how much of your spending you'd route through any single one of today's nine products?</li>
+      </ul>
+
+      <h4>Glossary</h4>
+      <dl class="glossary">
+        <div><dt>Neobank</dt><dd>A bank-like app with no physical branches; a crypto neobank builds that experience on or adjacent to blockchain rails instead of a traditional bank charter.</dd></div>
+        <div><dt>Self-Custodial</dt><dd>You hold the private keys or equivalent control over your assets at all times — the app is an interface, not a custodian.</dd></div>
+        <div><dt>Zero Rehypothecation</dt><dd>Collateral backing a loan is never lent out, moved, or reused elsewhere while it secures your position — Surge's core design principle for BTC.</dd></div>
+        <div><dt>MPC / Threshold Signature Scheme</dt><dd>Multi-party computation wallet tech — signing authority is split across multiple parties or devices rather than resting in one single private key, so no one point ever holds a complete key.</dd></div>
+        <div><dt>Loan Escrow</dt><dd>Avici's collateral model — deposited USDC sits in a smart contract rather than on the company's own balance sheet, settled against card charges on a rolling cycle instead of converting instantly.</dd></div>
+        <div><dt>Taproot</dt><dd>A 2021 Bitcoin upgrade enabling more complex spending conditions — like timelocks and multi-party signing rules — to be enforced directly by Bitcoin's own script, without a separate chain or wrapped token.</dd></div>
+        <div><dt>PayFi</dt><dd>"Payment Finance" — blockchain infrastructure specifically built around moving and settling payments, as distinct from trading or lending protocols.</dd></div>
+        <div><dt>Money Transmitter License</dt><dd>A U.S. state-level license required to move money on others' behalf — the reason card and neobank availability is so often state-by-state rather than nationwide.</dd></div>
+        <div><dt>Processor / Issuing Bank Risk</dt><dd>The risk that the regulated entity actually settling your card transactions fails or is suspended, cutting off your ability to spend, independent of whether your underlying crypto is safe — the lesson of Wirecard's 2020 collapse.</dd></div>
+        <div><dt>MiCA</dt><dd>Markets in Crypto-Assets — the European Union's unified regulatory framework for crypto-asset issuers and service providers.</dd></div>
+        <div><dt>KYC</dt><dd>"Know Your Customer" — identity verification (typically a government-issued ID) required by regulated lenders and card issuers before opening an account, distinct from a credit check.</dd></div>
+        <div><dt>Line of Credit vs. Term Loan</dt><dd>A term loan disburses a fixed amount you repay on a schedule; a revolving line of credit lets you draw, repay, and redraw within an approved limit without reapplying — Strike and Surge both offer the line-of-credit structure alongside fixed-term options.</dd></div>
+        <div><dt>Margin Call</dt><dd>A formal notice that a loan's LTV has crossed a threshold requiring the borrower to add collateral or pay down principal within a set window, or face liquidation — SALT's staged 75%/83.33% process is a concrete example.</dd></div>
+      </dl>
+    </div>
+  </section>
+
+  <section class="block">
+    <div class="wrap">
+      <span class="eyebrow">Bonus — A Tenth Product: Peer</span>
+      <h2>Peer: verify the payment, not the person.</h2>
+      <p>One more worth knowing, even though it doesn't fit neatly into today's "spend without selling" framing: <b style="color:var(--ink);">Peer</b> (peer.xyz), built by P2P Labs Inc. on the open-source <b style="color:var(--ink);">ZKP2P</b> protocol. Peer isn't a card or a lending product — it's a peer-to-peer marketplace for converting between fiat and crypto directly through payment apps you already use: Venmo, Cash App, Chime, Revolut, Wise, Zelle, and PayPal, with more currencies and platforms being added on request.</p>
+      <p>The mechanism is the interesting part. A buyer pays a seller directly on one of those payment apps — no company sits in the middle of the money movement. The seller's crypto is locked in an onchain smart-contract escrow the moment the order starts, so it can't move until payment is confirmed. Confirmation happens through a <b style="color:var(--ink);">zero-knowledge proof</b> generated from the buyer's own payment app — it proves the payment happened without exposing the buyer's full account history or identity to Peer, the seller, or anyone else. Only the amount, recipient, and timestamp are shared. Once that proof verifies, the escrow releases the crypto automatically.</p>
+      <div class="callout go">
+        <span class="tag">Direct Tie-Back to Section 09</span>
+        <p>Like Surge, Peer requires no identity verification — you connect a wallet or sign in with email or socials, nothing more. But the "no-KYC" claim means something different here: Surge skips KYC because it's a non-custodial <i>lending</i> product with no fiat leg at all. Peer skips KYC because it verifies the <i>payment itself</i> cryptographically instead of verifying who you are — a genuinely different trust model, not just a looser version of the same one.</p>
+      </div>
+
+      <h4>How Buying Actually Works</h4>
+      <p>The Buy screen has two modes — <b style="color:var(--ink);">Express</b>, which auto-matches you to the best available quote, and <b style="color:var(--ink);">Orderbook</b>, which lets you browse individual seller offers yourself. Either way, the flow is the same underneath:</p>
+      <div class="steps-mini">
+        <div class="step-mini"><span class="dot"></span><p><b style="color:var(--ink);">Pick your currency and platform.</b> A single search modal covers dozens of currencies (USD, EUR, GBP, AUD, CNY, and more, A–Z) crossed with every supported payment platform.</p></div>
+        <div class="step-mini"><span class="dot"></span><p><b style="color:var(--ink);">Enter an amount.</b> Peer compares live quotes across every connected payment platform at once, rather than showing you one seller's price in isolation.</p></div>
+        <div class="step-mini"><span class="dot"></span><p><b style="color:var(--ink);">Stake first, if your platform requires it.</b> Venmo and PayPal are both flagged "Stake Required" — see the Staking section below for why.</p></div>
+        <div class="step-mini"><span class="dot"></span><p><b style="color:var(--ink);">Pay the seller directly</b> on the payment app you chose, then wait for the zero-knowledge proof to verify it.</p></div>
+        <div class="step-mini"><span class="dot"></span><p><b style="color:var(--ink);">Receive your asset.</b> USDC (or whichever token you chose) releases from escrow straight to your wallet — or you can send it directly to a custom recipient address instead of your own account.</p></div>
+      </div>
+
+      <h4>Selling as a Liquidity Provider</h4>
+      <p>Selling has three modes: <b style="color:var(--ink);">Express</b> (quick, one-off — set your cash-out amount, platform, and receiving currency, done), <b style="color:var(--ink);">Manage</b> (oversee positions you've already opened), and <b style="color:var(--ink);">Advanced</b> — where Peer starts to look less like a simple exchange and more like a DeFi liquidity position. In Advanced, you deposit USDC, link a payment platform account (a Venmo username, for example), and then choose how your rate gets set: manage it yourself, or flip on <b style="color:var(--ink);">Earning Strategy</b> automation and hand rate-setting to an algorithmic vault instead.</p>
+      <div class="callout">
+        <span class="tag">Instructor Note — This Is the LP Farming Parallel</span>
+        <p>Point students straight back to Day 3. Manually setting your own sell rate versus delegating it to an automated strategy is the exact same active-vs-passive tradeoff as manually managing a concentrated liquidity range versus depositing into an auto-compounding vault. Peer just applies the pattern to P2P fiat liquidity instead of an onchain AMM pool.</p>
+      </div>
+
+      <h4>The Earn Marketplace</h4>
+      <p>Peer's Earn tab lists competing strategies sellers can delegate their liquidity to — each one publishing its own 7-day APR, trading volume, and total value currently managed, the same way you'd compare vaults on any DeFi yield aggregator:</p>
+      <table class="avail-table">
+        <thead><tr><th>Strategy</th><th>What It Does</th><th>Volume</th><th>Managed</th><th>7d APR</th></tr></thead>
+        <tbody>
+          <tr><td class="name">PeerEARN</td><td>The official vault, run by Peer itself</td><td>$194.2K</td><td>$19,163.51</td><td><span class="status yes">225.2%</span></td></tr>
+          <tr><td class="name">Delegate by USDCtoFiat</td><td>Third-party AI-powered rate engine across 34 currencies and 14 payment methods</td><td>$264.6K</td><td>$863.57</td><td><span class="status yes">105.5%</span></td></tr>
+          <tr><td class="name">PeerBOOST</td><td>Patient, high-return rate management for long-term LPs</td><td>$170.4K</td><td>$1,759.59</td><td><span class="status yes">184.5%</span></td></tr>
+          <tr><td class="name">ChooseWhysly</td><td>Wide spreads (0.50% fee), fewer fills, maximizes per-fill yield</td><td>$243.18</td><td>$4.23</td><td><span class="status yes">575.3%</span></td></tr>
+        </tbody>
+      </table>
+      <div class="callout warn">
+        <span class="tag">Read the APR Column Like a DeFi Native, Not a Headline-Chaser</span>
+        <p>ChooseWhysly's 575.3% APR is the biggest number on the board — and also the strategy with by far the smallest sample: $4.23 managed against $243 of volume. A tiny position that gets a couple of lucky wide-spread fills can post an eye-popping annualized rate that has nothing to do with what it would actually return at real size. Compare Managed and Volume alongside APR every time, the same instinct Day 3 should have already built for reading any yield number.</p>
+      </div>
+
+      <h4>Staking — Dispute Protection, Not a Yield Product</h4>
+      <p>This is what that "Stake Required" badge on Venmo and PayPal in the buy flow actually means. Venmo and PayPal payments can be reversed by the sender after the fact; platforms like Zelle and Cash App generally can't be. To protect sellers from a buyer taking the crypto and then reversing the payment, Peer requires buyers to stake USDC — dollar for dollar against order size — before they can buy through either of those two specific platforms. The staking dashboard tracks it plainly: Total Staked, Locked (tied up in open, dispute-protected orders), and Claimable (released back once an order completes cleanly). It's collateral for trust in a reversible payment rail, not a yield product — don't let students confuse it with the Earn strategies above just because both live in USDC.</p>
+
+      <h4>Where It Actually Fits</h4>
+      <p>Run it through the Section 13 framework in one breath: <b style="color:var(--ink);">custody</b> — non-custodial escrow, Peer itself never holds, controls, or transmits user funds; <b style="color:var(--ink);">mechanism</b> — neither a credit line nor a pre-loaded balance, but a direct P2P trade settled by cryptographic proof of payment, with an entire secondary layer of delegated liquidity strategies on the seller side; <b style="color:var(--ink);">availability</b> — gated by which payment app and currency you're using rather than a state-by-state list; <b style="color:var(--ink);">stage</b> — live on iOS and Android, built on an open-source protocol with public code on GitHub, still Peer's own beta.</p>
+      <p>Fees: up to a 0.95% taker fee, paid by the buyer, plus up to 0.5% if your trade bridges to a different chain. Sellers set their own rate on top of that — meaning your actual price is whatever the market of individual sellers (or their chosen Earn strategy) is offering at that moment, not a fixed platform rate.</p>
+      <div class="callout warn">
+        <span class="tag">What to Flag for Students</span>
+        <p>Because pricing comes from individual sellers rather than a platform-set rate, spreads can vary trade to trade — worth comparing a couple of offers, or letting Express do it, before taking one. And while the normal flow settles automatically once the ZK proof verifies, Peer's own docs describe a manual-release fallback for edge cases — worth understanding before moving meaningful size through either side of this.</p>
+      </div>
+    </div>
+  </section>
+
+  <section class="block">
+    <div class="wrap">
+      <span class="eyebrow">Bonus — Walkthrough: Cashing In and Out Without ID Verification</span>
+      <h2>Buying and selling on Peer, step by step.</h2>
+      <p>Everything above explains why Peer doesn't require identity verification. This is the practical version — what it actually looks like to move money in and out, using the app's own screens.</p>
+
+      <h4>Cashing In (Buying Crypto)</h4>
+      <div class="steps-mini">
+        <div class="step-mini"><span class="dot"></span><p><b style="color:var(--ink);">Open Buy → Express.</b> No sign-up form beyond connecting a wallet or signing in with email/socials — that's the entire "identity" step.</p></div>
+        <div class="step-mini"><span class="dot"></span><p><b style="color:var(--ink);">Tap the currency/platform selector.</b> Choose your fiat currency (USD, EUR, GBP, and dozens more) and which payment app you're paying from — Venmo, Cash App, Chime, Revolut, Wise, Zelle, or PayPal.</p></div>
+        <div class="step-mini"><span class="dot"></span><p><b style="color:var(--ink);">Enter the amount you're sending.</b> Peer pulls live quotes from every seller on that platform and shows you the best one — you're not negotiating manually.</p></div>
+        <div class="step-mini"><span class="dot"></span><p><b style="color:var(--ink);">Stake first if you're using Venmo or PayPal.</b> Both require USDC staked dollar-for-dollar against your order before you can buy through them — see the Staking explanation above for why. Zelle, Cash App, Chime, Revolut, and Wise don't carry that requirement.</p></div>
+        <div class="step-mini"><span class="dot"></span><p><b style="color:var(--ink);">Send the payment</b> to the seller directly on your chosen app, exactly like paying a friend.</p></div>
+        <div class="step-mini"><span class="dot"></span><p><b style="color:var(--ink);">Wait for the zero-knowledge proof to verify</b> that the payment happened — this is automatic and typically fast, not a manual review.</p></div>
+        <div class="step-mini"><span class="dot"></span><p><b style="color:var(--ink);">Crypto lands in your wallet</b> — or, if you chose "Custom recipient," directly at any wallet address you specify instead of your own account.</p></div>
+      </div>
+
+      <h4>Cashing Out (Selling Crypto for Fiat)</h4>
+      <div class="steps-mini">
+        <div class="step-mini"><span class="dot"></span><p><b style="color:var(--ink);">Open Sell → Express</b> for a one-off cash-out, or Advanced if you want to leave liquidity sitting and earning between sales.</p></div>
+        <div class="step-mini"><span class="dot"></span><p><b style="color:var(--ink);">Enter how much USDC you're cashing out,</b> pick the platform you want paid on and the currency you want to receive.</p></div>
+        <div class="step-mini"><span class="dot"></span><p><b style="color:var(--ink);">Enter your username on that platform</b> (your Venmo username, for example) — this is where the buyer's payment lands, not an identity check by Peer.</p></div>
+        <div class="step-mini"><span class="dot"></span><p><b style="color:var(--ink);">A buyer takes your offer and pays you directly</b> on that app — the fiat lands in your own account like any normal peer payment.</p></div>
+        <div class="step-mini"><span class="dot"></span><p><b style="color:var(--ink);">Your USDC releases from escrow to the buyer</b> automatically once their payment verifies — you keep the fiat plus whatever spread you (or your chosen Earn strategy) set.</p></div>
+      </div>
+
+      <div class="callout warn">
+        <span class="tag">What "No ID Verification" Does and Doesn't Mean</span>
+        <p>Peer itself doesn't run a KYC check on you. That is not the same as the transaction being invisible or exempt from anything. Venmo, PayPal, Zelle, and the other payment apps all have their own account-level identity requirements and their own transaction-monitoring and reporting thresholds, independent of Peer entirely — a large or unusual payment can still get flagged, frozen, or reported by the payment app itself. And skipping Peer's own KYC changes nothing about a person's individual tax or reporting obligations on crypto gains, which exist regardless of which app or rail was used to cash in or out. Teach this distinction explicitly: "no platform ID check" is a statement about Peer's process, not a statement about anyone's legal obligations.</p>
+      </div>
+    </div>
+  </section>
+
+  <div class="wrap close">
+    <span class="eyebrow">Before Day 7</span>
+    <h2>The infrastructure is real. Now it fits in your pocket.</h2>
+    <p>Nine real products, nine different trust models, and a state-by-state reminder that "available in the US" is rarely a simple yes or no. Come back ready to discuss which of today's nine you'd actually put real money into first, and why — custody model, mechanism, availability, and stage, in that order.</p>
+    <div class="signoff">See you Day 7.</div>
+  </div>
+
+</body>
+</html>
